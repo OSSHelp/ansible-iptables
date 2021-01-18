@@ -1,0 +1,6 @@
+---
+- name: create if-pre-up script
+  template:
+    src: if-pre-up-u16.j2
+    dest: /etc/network/if-pre-up.d/iptables
+    mode: 0700

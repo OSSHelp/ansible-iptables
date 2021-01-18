@@ -1,0 +1,19 @@
+---
+- name: custom.firewall-restore script
+  template:
+    src: custom.firewall-restore.j2
+    dest: /usr/local/sbin/custom.firewall-restore
+    mode: 0700
+
+- name: systemd service
+  template:
+    src: firewall-service.j2
+    dest: /etc/systemd/system/custom-firewall.service
+  register: firewall_service
+
+- name: systemd reload
+  systemd: daemon_reload=yes  # noqa 503
+  when: firewall_service.changed
+
+- name: systemd service enable
+  systemd: name=custom-firewall enabled=yes

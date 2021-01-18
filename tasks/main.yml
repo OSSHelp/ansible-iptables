@@ -1,0 +1,9 @@
+---
+- name: gather required facts
+  setup:
+    gather_subset: [min, network]
+  when: ansible_interfaces is not defined or ansible_lsb.description is not defined
+
+- name: ubuntu common
+  import_tasks: ubuntu/main.yml
+  when: ansible_lsb.description is search('Ubuntu')

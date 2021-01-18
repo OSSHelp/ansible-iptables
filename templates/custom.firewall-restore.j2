@@ -1,0 +1,33 @@
+{% raw %}#!/bin/bash
+
+errcode=0
+v4_trigger=/var/run/iptables.restored
+v6_trigger=/var/run/ip6tables.restored
+v4_rules=/etc/network/iptables.active
+v6_rules=/etc/network/ip6tables.active
+
+ipset_list=/etc/network/ipset.list
+ipset_trigger=/var/run/ipset.restored
+
+nfacct_list=/etc/network/nfacct.list
+nfacct_trigger=/var/run/nfacct.restored
+
+function show_notice() { echo -e "[NOTICE] $1"; }
+function show_error() { echo -e "[ERROR] $1" >&2; errcode=1; }
+
+test -f $nfacct_list -a ! -f $nfacct_trigger && {
+    nfacct restore < $nfacct_list && touch $nfacct_trigger && show_notice "nfacct restore succeeded" || show_error "nfacct restore failed"
+}
+test -f $ipset_list -a ! -f $ipset_trigger && {
+    ipset -exist restore -file $ipset_list && touch $ipset_trigger && show_notice "ipset restore succeeded" || show_error "ipset restore failed"
+}
+test -f $v4_rules -a ! -f $v4_trigger && {
+    iptables-restore -v $v4_rules && touch $v4_trigger && show_notice "iptables restore succeeded" || show_error "iptables restore failed"
+}
+test -f $v6_rules -a ! -f $v6_trigger && {
+    ip6tables-restore -v $v6_rules && touch $v6_trigger && show_notice "ip6tables restore succeeded" || show_error "ip6tables restore failed"
+}
+
+test $errcode -eq 0 && show_notice "firewall restore succeeded" || show_error "firewall restore failed"
+exit $errcode
+{% endraw %}

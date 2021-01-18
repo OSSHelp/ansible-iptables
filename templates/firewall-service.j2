@@ -1,0 +1,21 @@
+{% raw %}[Unit]
+Description = Apply firewall rules
+DefaultDependencies=no
+
+Before=network-pre.target
+Wants=network-pre.target
+
+Wants=systemd-modules-load.service local-fs.target
+After=systemd-modules-load.service local-fs.target
+
+Conflicts=shutdown.target
+Before=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/custom.firewall-restore
+
+[Install]
+WantedBy=multi-user.target
+{% endraw %}
