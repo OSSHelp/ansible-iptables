@@ -1,0 +1,24 @@
+---
+- name: configuration check
+  block:
+    - name: check iptables configuration
+      command: ip"{{ ip_version }}"tables-restore -vt /etc/network/ip"{{ ip_version }}"tables.active
+      ignore_errors: true
+      register: iptables_syntax_check
+      changed_when: false
+
+    - name: show errors
+      debug:
+        msg: "{{ iptables_syntax_check.stderr }}"
+      when: iptables_syntax_check.rc != 0
+
+    - name: Notify if bad syntax
+      assert:
+        that:
+          - iptables_syntax_check.rc == 0
+        fail_msg: "Ip{{ ip_version }}tables configuration check failed. You should check debug information above and fix the problem(s)."
+
+    - name: apply iptables rules
+      command: ip"{{ ip_version }}"tables-restore /etc/network/ip"{{ ip_version }}"tables.active
+      when: iptables_syntax_check.rc == 0
+  when: not ansible_check_mode

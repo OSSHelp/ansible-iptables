@@ -1,0 +1,22 @@
+#!/bin/bash
+
+errcode=0
+v4_trigger=/var/run/iptables.restored
+v6_trigger=/var/run/ip6tables.restored
+v4_rules=/etc/network/iptables.active
+v6_rules=/etc/network/ip6tables.active
+
+ipset_list=/etc/network/ipset.list
+ipset_trigger=/var/run/ipset.restored
+
+nfacct_list=/etc/network/nfacct.list
+nfacct_trigger=/var/run/nfacct.restored
+
+[[ {% for iface in ext_ifaces %}{% if loop.index != 1 %} || {% endif %}"${IFACE}" =~ "{{ iface }}"{% endfor %} ]] && [[ "${PHASE}" = "pre-up" ]] && {
+    test -f $nfacct_list -a ! -f $nfacct_trigger && { nfacct restore < $nfacct_list && touch $nfacct_trigger || errcode=1; }
+    test -f $ipset_list -a ! -f $ipset_trigger && { ipset -exist restore -file $ipset_list && touch $ipset_trigger || errcode=1; }
+    test "${ADDRFAM}" = "inet" -a -f $v4_rules -a ! -f $v4_trigger && { iptables-restore -v $v4_rules && touch $v4_trigger || errcode=1; }
+    test "${ADDRFAM}" = "inet6" -a ! -f $v6_trigger && { ip6tables-restore -v $v6_rules && touch $v6_trigger || errcode=1; }
+}
+
+exit $errcode

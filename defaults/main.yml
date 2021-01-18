@@ -1,0 +1,13 @@
+---
+iptables_packages:
+  - iptables
+
+ext_ifaces:
+  - eth0
+
+accept_icmp:
+  v4: true
+  v6: true
+
+input:
+  v4: [{p: tcp, dport: 22, comment: 'ssh host'}]

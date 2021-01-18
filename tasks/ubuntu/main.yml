@@ -1,0 +1,46 @@
+---
+- name: install packages
+  apt:
+    name: "{{ iptables_packages }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 86400
+
+- name: remove iptables-persistent
+  apt:
+    name: iptables-persistent
+    state: absent
+    purge: yes
+
+- name: "get enabled services"
+  service_facts:
+
+- name: check that given ext_ifaces really exist on target host
+  assert:
+    that: "'{{ item }}' in ansible_interfaces"
+  with_items: "{{ ext_ifaces }}"
+  when: disable_interface_check is not defined
+
+- name: v4
+  template: src=ipv4.j2 dest=/etc/network/iptables.active mode=0600
+  notify:
+    - apply v4 rules
+    - restart fail2ban
+    - restart lxd
+    - restart docker
+
+- name: v6
+  template: src=ipv6.j2 dest=/etc/network/ip6tables.active mode=0600
+  notify:
+    - apply v6 rules
+    - restart fail2ban
+    - restart lxd
+    - restart docker
+
+- name: ubuntu 16.04
+  import_tasks: ../ubuntu/16.04.yml
+  when: ansible_lsb.description is search('Ubuntu 16.04')
+
+- name: ubuntu 18.04
+  import_tasks: ../ubuntu/18.04.yml
+  when: ansible_lsb.description is search('Ubuntu 18.04')

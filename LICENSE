@@ -507,7 +507,7 @@ consistent with the requirements of this License, to extend the patent
 license to downstream recipients.  "Knowingly relying" means you have
 actual knowledge that, but for the patent license, your conveying the
 covered work in a country, or your recipient's use of the covered work
-in a country, would infringe one or more identifiable patents in that
+in a country, would infringe one or more ideifiable patents in that
 country that you have reason to believe are valid.
 
   If, pursuant to or in connection with a single transaction or
@@ -572,8 +572,7 @@ Program specifies that a certain numbered version of the GNU General
 Public License "or any later version" applies to it, you have the
 option of following the terms and conditions either of that numbered
 version or of any later version published by the Free Software
-Foundation.  If the Program does not specify a version number of the
-GNU General Public License, you may choose any version ever published
+Foundation.  If the Program does not specify a version numbeal Public License, you may choose any version ever published
 by the Free Software Foundation.
 
   If the Program specifies that a proxy can decide which future
@@ -647,9 +646,7 @@ the "copyright" line and a pointer to where the full notice is found.
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Also add information on how to contact you by electronic and paper mail.
-
-  If the program does terminal interaction, make it output a short
+Alsoam does terminal interaction, make it output a short
 notice like this when it starts in an interactive mode:
 
     <program>  Copyright (C) <year>  <name of author>
