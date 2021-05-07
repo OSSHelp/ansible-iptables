@@ -22,7 +22,10 @@
   when: disable_interface_check is not defined
 
 - name: v4
-  template: src=ipv4.j2 dest=/etc/network/iptables.active mode=0600
+  template:
+    src: ipv4.j2
+    dest: /etc/network/iptables.active
+    mode: 0600
   notify:
     - apply v4 rules
     - restart fail2ban
@@ -30,7 +33,10 @@
     - restart docker
 
 - name: v6
-  template: src=ipv6.j2 dest=/etc/network/ip6tables.active mode=0600
+  template:
+    src: ipv6.j2
+    dest: /etc/network/ip6tables.active
+    mode: 0600
   notify:
     - apply v6 rules
     - restart fail2ban
@@ -38,9 +44,13 @@
     - restart docker
 
 - name: ubuntu 16.04
-  import_tasks: ../ubuntu/16.04.yml
-  when: ansible_lsb.description is search('Ubuntu 16.04')
+  include_tasks: ubuntu/16.04.yml
+  when: ansible_distribution_release == 'xenial'
 
 - name: ubuntu 18.04
-  import_tasks: ../ubuntu/18.04.yml
-  when: ansible_lsb.description is search('Ubuntu 18.04')
+  include_tasks: ubuntu/18.04.yml
+  when: ansible_distribution_release == 'bionic'
+
+- name: ubuntu 20.04
+  include_tasks: ubuntu/20.04.yml
+  when: ansible_distribution_release == 'focal'
