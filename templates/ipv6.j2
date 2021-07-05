@@ -8,7 +8,40 @@
 :docker_forward - [0:0]
 {% endif %}{% for iface in ext_ifaces %}
 -A INPUT -i {{ iface }} -j enemy_input
-{% endfor %}{% if docker_forward.v6 is defined %}{% for iface in ext_ifaces %}
+{% endfor %}{% for rule in forward.v6|default([]) %}
+-A FORWARD{{
+                ' -i ' ~ rule.i if rule.i is defined else ''
+              }}{{
+                ' ! -i ' ~ rule.ni if rule.ni is defined else ''
+              }}{{
+                ' -o ' ~ rule.o if rule.o is defined else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
+              }}{{
+                ' --tcp-flags ' ~ rule.flags ~ ' SYN' if rule.p is defined and rule.p == 'tcp' and rule.flags is defined else ''
+              }}{{
+                ' -s ' ~ rule.s if rule.s is defined else ''
+              }}{{
+                ' ! -s ' ~ rule.ns if rule.ns is defined else ''
+              }}{{
+                ' -d ' ~ rule.d if rule.d is defined else ''
+              }}{{
+                ' ! -d ' ~ rule.nd if rule.nd is defined else ''
+              }}{{
+                ' -m state --state ' ~ rule.state if rule.state is defined else ''
+              }}{{
+                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
+              }}{{
+                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT')
+              }}
+{% endfor %}
+{% if docker_forward.v6 is defined %}{% for iface in ext_ifaces %}
 -A DOCKER-USER -i {{ iface }} -j docker_forward
 {% endfor %}{% endif %}{% for rule in docker_forward.v6|default([]) %}
 -A docker_forward{{
