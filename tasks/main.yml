@@ -1,8 +1,8 @@
 ---
 - name: gather required facts
   setup:
-    gather_subset: [min, network]
-  when: ansible_interfaces is not defined or ansible_lsb.description is not defined
+    gather_subset: [min, virtual, network]
+  when: ansible_interfaces is not defined or ansible_lsb.description is not defined or ansible_distribution_release is not defined
 
 - name: ubuntu common
   import_tasks: ubuntu/main.yml
