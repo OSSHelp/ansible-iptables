@@ -86,9 +86,9 @@
               }}{{
                 ' ! -o ' ~ rule.no if rule.no is defined else ''
               }}{{
-                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --sport ' ~ rule.sport if rule.sport is defined and ',' not in rule.sport|string else ''
               }}{{
-                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --sports ' ~ rule.sport if rule.sport is defined and ',' in rule.sport|string else ''
               }}{{
                 ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
               }}{{
@@ -317,5 +317,27 @@ COMMIT
               }}{{
                 ' --clamp-mss-to-pmtu' if rule.action is defined and rule.action == 'TCPMSS' and rule.setmss is not defined else ''
               }}
+{% endfor %}{% for rule in mangle_postrouting.v4|default([]) %}
+-A POSTROUTING{{
+               ' -d ' ~ rule.d if rule.d is defined else ''
+             }}{{
+               ' ! -d ' ~ rule.nd if rule.nd is defined else ''
+             }}{{
+               ' -s ' ~ rule.s if rule.s is defined else ''
+             }}{{
+               ' ! -s ' ~ rule.ns if rule.ns is defined else ''
+             }}{{
+               ' -i ' ~ rule.i if rule.i is defined else ''
+             }}{{
+               ' -o ' ~ rule.o if rule.o is defined else ''
+             }}{{
+               ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined else ''
+             }}{{
+               ' -m policy --dir ' ~ rule.dir | default('in') ~ ' --pol ' ~ rule.pol | default('ipsec') if rule.m is defined and rule.m == 'policy' else ''
+             }}{{
+               ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
+             }}{{
+               ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
+             }} -j {{ rule.action | default('ACCEPT') }}
 {% endfor %}
 COMMIT

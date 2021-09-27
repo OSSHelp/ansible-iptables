@@ -82,9 +82,9 @@
               }}{{
                 ' ! -o ' ~ rule.no if rule.no is defined else ''
               }}{{
-                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --sport ' ~ rule.sport if rule.sport is defined and ',' not in rule.sport|string else ''
               }}{{
-                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --sports ' ~ rule.sport if rule.sport is defined and ',' in rule.sport|string else ''
               }}{{
                 ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
               }}{{
