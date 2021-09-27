@@ -1,12 +1,44 @@
 *filter
-:INPUT ACCEPT [0:0]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
+:INPUT {{ ipv6_policies.filter.input| default('accept') | upper }} [0:0]
+:FORWARD {{ ipv6_policies.filter.forward| default('accept') | upper }} [0:0]
+:OUTPUT {{ ipv6_policies.filter.output| default('accept') | upper }} [0:0]
 :enemy_input - [0:0]
 {% if docker_forward.v6 is defined %}
 :DOCKER-USER - [0:0]
 :docker_forward - [0:0]
-{% endif %}{% for iface in ext_ifaces %}
+{% endif %}{% for rule in input.v6|default([]) %}
+-A INPUT{{
+                ' -i ' ~ rule.i if rule.i is defined else ''
+              }}{{
+                ' ! -i ' ~ rule.ni if rule.ni is defined else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
+              }}{{
+                ' -m icmp6 --icmpv6-type ' ~ rule.type if rule.type is defined else ''
+              }}{{
+                ' -s ' ~ rule.s if rule.s is defined else ''
+              }}{{
+                '! -s ' ~ rule.ns if rule.ns is defined else ''
+              }}{{
+                ' -d ' ~ rule.d if rule.d is defined else ''
+              }}{{
+                ' ! -d ' ~ rule.nd if rule.nd is defined else ''
+              }}{{
+                ' -m policy --dir ' ~ rule.dir | default('in') ~ ' --pol ' ~ rule.pol | default('ipsec') if rule.m is defined and rule.m == 'policy' else ''
+              }}{{
+                ' -m ipv6header --header ' ~ rule.header | default('esp') if rule.m is defined and rule.m == 'ipv6header' else ''
+              }}{{
+                ' -m state --state ' ~ rule.state if rule.state is defined else ''
+              }}{{
+                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
+              }}{{
+                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
+              }} -j {{ rule.action | default('ACCEPT') }}
+{% endfor %}{% for iface in ext_ifaces %}
 -A INPUT -i {{ iface }} -j enemy_input
 {% endfor %}{% for rule in forward.v6|default([]) %}
 -A FORWARD{{
@@ -40,6 +72,42 @@
               }}{{
                 ' -j ' ~ rule.action | default('ACCEPT')
               }}
+{% endfor %}{% for rule in output.v6|default([]) %}
+-A OUTPUT{{
+                ' -i ' ~ rule.i if rule.i is defined else ''
+              }}{{
+                ' ! -i ' ~ rule.ni if rule.ni is defined else ''
+              }}{{
+                ' -o ' ~ rule.o if rule.o is defined else ''
+              }}{{
+                ' ! -o ' ~ rule.no if rule.no is defined else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
+              }}{{
+                ' -m icmp6 --icmpv6-type ' ~ rule.type if rule.type is defined else ''
+              }}{{
+                ' -s ' ~ rule.s if rule.s is defined else ''
+              }}{{
+                '! -s ' ~ rule.ns if rule.ns is defined else ''
+              }}{{
+                ' -d ' ~ rule.d if rule.d is defined else ''
+              }}{{
+                ' ! -d ' ~ rule.nd if rule.nd is defined else ''
+              }}{{
+                ' -m policy --dir ' ~ rule.dir | default('in') ~ ' --pol ' ~ rule.pol | default('ipsec') if rule.m is defined and rule.m == 'policy' else ''
+              }}{{
+                ' -m ipv6header --header ' ~ rule.header | default('esp') if rule.m is defined and rule.m == 'ipv6header' else ''
+              }}{{
+                ' -m state --state ' ~ rule.state if rule.state is defined else ''
+              }}{{
+                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
+              }}{{
+                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
+              }} -j {{ rule.action | default('ACCEPT') }}
 {% endfor %}
 {% if docker_forward.v6 is defined %}{% for iface in ext_ifaces %}
 -A DOCKER-USER -i {{ iface }} -j docker_forward
@@ -79,7 +147,7 @@
 -A enemy_input -p icmpv6 --icmpv6-type neighbor-solicitation -m hl --hl-eq 255 -j ACCEPT
 -A enemy_input -p icmpv6 --icmpv6-type neighbor-advertisement -m hl --hl-eq 255 -j ACCEPT
 -A enemy_input -p icmpv6 --icmpv6-type redirect -m hl --hl-eq 255 -j ACCEPT
-{% endif %}{% for rule in input.v6|default([]) %}
+{% endif %}{% for rule in enemy_input.v6|default([]) %}
 -A enemy_input{{
                 ' -i ' ~ rule.i if rule.i is defined else ''
               }}{{
@@ -116,10 +184,10 @@
 -A enemy_input -j DROP
 COMMIT
 *nat
-:PREROUTING ACCEPT [0:0]
-:INPUT ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
-:POSTROUTING ACCEPT [0:0]
+:PREROUTING {{ ipv6_policies.nat.prerouting| default('accept') | upper }} [0:0]
+:INPUT {{ ipv6_policies.nat.input| default('accept') | upper }} [0:0]
+:OUTPUT {{ ipv6_policies.nat.output| default('accept') | upper }} [0:0]
+:POSTROUTING {{ ipv6_policies.nat.postrouting| default('accept') | upper }} [0:0]
 {% for rule in postrouting.v6|default([]) %}
 -A POSTROUTING{{
                ' -d ' ~ rule.d if rule.d is defined else ''
@@ -210,9 +278,9 @@ COMMIT
 {% endfor %}
 COMMIT
 *mangle
-:PREROUTING ACCEPT [0:0]
-:INPUT ACCEPT [0:0]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
-:POSTROUTING ACCEPT [0:0]
+:PREROUTING {{ ipv6_policies.mangle.prerouting| default('accept') | upper }} [0:0]
+:INPUT {{ ipv6_policies.mangle.input| default('accept') | upper }} [0:0]
+:FORWARD {{ ipv6_policies.mangle.forward| default('accept') | upper }} [0:0]
+:OUTPUT {{ ipv6_policies.mangle.output| default('accept') | upper }} [0:0]
+:POSTROUTING {{ ipv6_policies.mangle.postrouting| default('accept') | upper }} [0:0]
 COMMIT

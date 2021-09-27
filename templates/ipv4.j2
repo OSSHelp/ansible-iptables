@@ -1,12 +1,42 @@
 *filter
-:INPUT ACCEPT [0:0]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
+:INPUT {{ ipv4_policies.filter.input | default('accept') | upper }} [0:0]
+:FORWARD {{ ipv4_policies.filter.forward | default('accept') | upper }} [0:0]
+:OUTPUT {{ ipv4_policies.filter.output | default('accept') | upper }} [0:0]
 :enemy_input - [0:0]
 {% if docker_forward.v4 is defined %}
 :DOCKER-USER - [0:0]
 :docker_forward - [0:0]
-{% endif %}{% for iface in ext_ifaces %}
+{% endif %}{% for rule in input.v4|default([]) %}
+-A INPUT{{
+                ' -i ' ~ rule.i if rule.i is defined else ''
+              }}{{
+                ' ! -i ' ~ rule.ni if rule.ni is defined else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
+              }}{{
+                ' -m policy --dir ' ~ rule.dir | default('in') ~ ' --pol ' ~ rule.pol | default('ipsec') if rule.m is defined and rule.m == 'policy' else ''
+              }}{{
+                ' -m icmp --icmp-type ' ~ rule.type if rule.type is defined else ''
+              }}{{
+                ' -s ' ~ rule.s if rule.s is defined else ''
+              }}{{
+                ' ! -s ' ~ rule.ns if rule.ns is defined else ''
+              }}{{
+                ' -d ' ~ rule.d if rule.d is defined else ''
+              }}{{
+                ' ! -d ' ~ rule.nd if rule.nd is defined else ''
+              }}{{
+                ' -m state --state ' ~ rule.state if rule.state is defined else ''
+              }}{{
+                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
+              }}{{
+                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
+              }} -j {{ rule.action | default('ACCEPT') }}
+{% endfor %}{% for iface in ext_ifaces %}
 -A INPUT -i {{ iface }} -j enemy_input
 {% endfor %}{% for rule in forward.v4|default([]) %}
 -A FORWARD{{
@@ -46,6 +76,40 @@
               }}{{
                 ' --clamp-mss-to-pmtu' if rule.action is defined and rule.action == 'TCPMSS' and rule.setmss is not defined else ''
               }}
+{% endfor %}{% for rule in output.v4|default([]) %}
+-A OUTPUT{{
+                ' -i ' ~ rule.i if rule.i is defined else ''
+              }}{{
+                ' ! -i ' ~ rule.ni if rule.ni is defined else ''
+              }}{{
+                ' -o ' ~ rule.o if rule.o is defined else ''
+              }}{{
+                ' ! -o ' ~ rule.no if rule.no is defined else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
+              }}{{
+                ' -m policy --dir ' ~ rule.dir | default('in') ~ ' --pol ' ~ rule.pol | default('ipsec') if rule.m is defined and rule.m == 'policy' else ''
+              }}{{
+                ' -m icmp --icmp-type ' ~ rule.type if rule.type is defined else ''
+              }}{{
+                ' -s ' ~ rule.s if rule.s is defined else ''
+              }}{{
+                ' ! -s ' ~ rule.ns if rule.ns is defined else ''
+              }}{{
+                ' -d ' ~ rule.d if rule.d is defined else ''
+              }}{{
+                ' ! -d ' ~ rule.nd if rule.nd is defined else ''
+              }}{{
+                ' -m state --state ' ~ rule.state if rule.state is defined else ''
+              }}{{
+                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
+              }}{{
+                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
+              }} -j {{ rule.action | default('ACCEPT') }}
 {% endfor %}{% if docker_forward.v4 is defined %}{% for iface in ext_ifaces %}
 -A DOCKER-USER -i {{ iface }} -j docker_forward
 {% endfor %}{% endif %}{% for rule in docker_forward.v4|default([]) %}
@@ -79,7 +143,7 @@
 -A enemy_input -p icmp -m icmp --icmp-type time-exceeded -j ACCEPT
 -A enemy_input -p icmp -m icmp --icmp-type destination-unreachable -j ACCEPT
 -A enemy_input -p icmp -m icmp --icmp-type parameter-problem -j ACCEPT
-{% endif %}{% for rule in input.v4|default([]) %}
+{% endif %}{% for rule in enemy_input.v4|default([]) %}
 -A enemy_input{{
                 ' -i ' ~ rule.i if rule.i is defined else ''
               }}{{
@@ -114,10 +178,10 @@
 -A enemy_input -j DROP
 COMMIT
 *nat
-:PREROUTING ACCEPT [0:0]
-:INPUT ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
-:POSTROUTING ACCEPT [0:0]
+:PREROUTING {{ ipv4_policies.nat.prerouting | default('accept') | upper }} [0:0]
+:INPUT {{ ipv4_policies.nat.input | default('accept') | upper }} [0:0]
+:OUTPUT {{ ipv4_policies.nat.output | default('accept') | upper }} [0:0]
+:POSTROUTING {{ ipv4_policies.nat.postrouting | default('accept') | upper }} [0:0]
 {% for rule in dnat.v4|default([]) %}
 -A PREROUTING{{
                ' -d ' ~ rule.d if rule.d is defined else ''
@@ -210,11 +274,11 @@ COMMIT
 {% endfor %}
 COMMIT
 *mangle
-:PREROUTING ACCEPT [0:0]
-:INPUT ACCEPT [0:0]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
-:POSTROUTING ACCEPT [0:0]
+:PREROUTING {{ ipv4_policies.mangle.prerouting | default('accept') | upper }} [0:0]
+:INPUT {{ ipv4_policies.mangle.input | default('accept') | upper }} [0:0]
+:FORWARD {{ ipv4_policies.mangle.forward | default('accept') | upper }} [0:0]
+:OUTPUT {{ ipv4_policies.mangle.output | default('accept') | upper }} [0:0]
+:POSTROUTING {{ ipv4_policies.mangle.postrouting | default('accept') | upper }} [0:0]
 {% for rule in mangle_forward.v4|default([]) %}
 -A FORWARD{{
                 ' -i ' ~ rule.i if rule.i is defined else ''

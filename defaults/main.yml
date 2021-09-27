@@ -9,5 +9,8 @@ accept_icmp:
   v4: true
   v6: true
 
-input:
+enemy_input:
   v4: [{p: tcp, dport: 22, comment: 'ssh host'}]
+
+ipv4_policies: []
+ipv6_policies: []

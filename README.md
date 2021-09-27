@@ -8,17 +8,19 @@ Ansible role for iptables setup.
 
 ## Settings
 
-### Enable icmp
+### Enable ICMP
 
 ``` yaml
 accept_icmp: {v4: true, v6: true}
 ```
 
-Creates typical icmp rules for IPv4 and IPv6.
+Creates typical ICMP rules for IPv4 and IPv6.
 
 ### Supported chains
 
-- `input`. enemy_input chain for input traffic
+- `input`. INPUT chain for input traffic
+- `enemy_input`. enemy_input chain for input traffic
+- `output`. OUTPUT chain for outgoing traffic
 - `docker_forward`. docker_forward chain for forward traffic
 - `dnat`. nat table. DNAT rules
 - `snat`. nat table. SNAT rules
@@ -26,7 +28,20 @@ Creates typical icmp rules for IPv4 and IPv6.
 - `postrouting`. postrouting chain, nat table.
 - `forward`. filter, mangle tables.
 
-All of these chains
+### Changing policies
+
+Performed via `ipv4_policies` and `ipv6_policies`, for example:
+
+``` yaml
+ipv4_policies:
+  filter:
+    forward: drop
+ipv6_policies:
+  nat:
+    prerouting: drop
+```
+
+By default everything is ACCEPT.
 
 ### Common settings for rules
 
