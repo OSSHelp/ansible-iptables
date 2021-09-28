@@ -86,7 +86,7 @@
               }}{{
                 ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --sports ' ~ rule.sport if rule.sport is defined and ',' in rule.sport|string else ''
               }}{{
-                ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
+                ' -p ' ~ rule.p if rule.p is defined and rule.sport is not defined else ''
               }}{{
                 ' -m icmp6 --icmpv6-type ' ~ rule.type if rule.type is defined else ''
               }}{{
