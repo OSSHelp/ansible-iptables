@@ -3,6 +3,11 @@
 :FORWARD {{ ipv6_policies.filter.forward| default('accept') | upper }} [0:0]
 :OUTPUT {{ ipv6_policies.filter.output| default('accept') | upper }} [0:0]
 :enemy_input - [0:0]
+{% if custom_filter_chains | default([]) | length > 0 %}
+{% for chain, params in custom_filter_chains.items() %}
+:{{ chain }} - [0:0]
+{% endfor %}
+{% endif %}
 {% if docker_forward.v6 is defined %}
 :DOCKER-USER - [0:0]
 :docker_forward - [0:0]
@@ -182,6 +187,39 @@
 {% endfor %}
 -A enemy_input -m state --state RELATED,ESTABLISHED -j ACCEPT
 -A enemy_input -j DROP
+{% if custom_filter_chains | default([]) | length > 0 %}{% for chain, params in custom_filter_chains.items() %}{% for rule in params.v6|default([]) %}
+-A {{ chain }}{{
+                ' -i ' ~ rule.i if rule.i is defined else ''
+              }}{{
+                ' ! -i ' ~ rule.ni if rule.ni is defined else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m ' ~ rule.p | default('tcp') ~ ' --dport ' ~ rule.dport if rule.dport is defined and ',' not in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p | default('tcp') ~ ' -m multiport --dports ' ~ rule.dport if rule.dport is defined and ',' in rule.dport|string else ''
+              }}{{
+                ' -p ' ~ rule.p if rule.p is defined and rule.dport is not defined else ''
+              }}{{
+                ' -m icmp6 --icmpv6-type ' ~ rule.type if rule.type is defined else ''
+              }}{{
+                ' -s ' ~ rule.s if rule.s is defined else ''
+              }}{{
+                '! -s ' ~ rule.ns if rule.ns is defined else ''
+              }}{{
+                ' -d ' ~ rule.d if rule.d is defined else ''
+              }}{{
+                ' ! -d ' ~ rule.nd if rule.nd is defined else ''
+              }}{{
+                ' -m policy --dir ' ~ rule.dir | default('in') ~ ' --pol ' ~ rule.pol | default('ipsec') if rule.m is defined and rule.m == 'policy' else ''
+              }}{{
+                ' -m ipv6header --header ' ~ rule.header | default('esp') if rule.m is defined and rule.m == 'ipv6header' else ''
+              }}{{
+                ' -m state --state ' ~ rule.state if rule.state is defined else ''
+              }}{{
+                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
+              }}{{
+                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
+              }} -j {{ rule.action | default('ACCEPT') }}
+{% endfor %}{% endfor %}{% endif %}
 COMMIT
 *nat
 :PREROUTING {{ ipv6_policies.nat.prerouting| default('accept') | upper }} [0:0]
