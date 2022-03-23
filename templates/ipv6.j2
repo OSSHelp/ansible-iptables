@@ -76,6 +76,10 @@
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
               }}{{
                 ' -j ' ~ rule.action | default('ACCEPT')
+              }}{{
+                ' --set-mss ' ~ rule.setmss if rule.action is defined and rule.action == 'TCPMSS' and rule.setmss is defined else ''
+              }}{{
+                ' --clamp-mss-to-pmtu' if rule.action is defined and rule.action == 'TCPMSS' and rule.setmss is not defined else ''
               }}
 {% endfor %}{% for rule in output.v6|default([]) %}
 -A OUTPUT{{
