@@ -13,16 +13,16 @@
   service:
     name: fail2ban
     state: restarted
-  when: "'failban' in ansible_facts.services"
+  when: "'fail2ban.service' in ansible_facts.services"
 
 - name: restart lxd
   service:
     name: lxd
     state: restarted
-  when: "'lxd' in ansible_facts.services"
+  when: "'lxd.service' in ansible_facts.services"
 
 - name: restart docker
   service:
     name: docker
     state: restarted
-  when: "'docker' in ansible_facts.services"
+  when: "'docker.service' in ansible_facts.services"
