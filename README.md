@@ -69,6 +69,7 @@ By default everything is ACCEPT.
 | `nd: 234.234.234.234` | - | `! -d 234.234.234.234` | **not** destination address |
 | `state: NEW` | - | `-m state --state NEW` | connection state |
 | `list: oss-v4` | - | `-m set --match-set oss-v4 src` | ipset list |
+| `nfacct: http-v4` | - | `-m nfacct --nfacct-name http-v4` | nfacct counter |
 | `comment: "test rule"` | - | `-m comment --comment "test rule"` | rule comment |
 
 These settings work for any supported chain.
@@ -142,6 +143,11 @@ disable_interface_check: true
 - role: iptables
   ext_ifaces: [eno1, wlp1s0]
   accept_icmp: { v4: true, v6: true }
+  input:
+    v4:
+      - { dport: 80, nfacct: "http-v4" }
+    v6:
+      - { dport: 80, nfacct: "http-v6" }
   enemy_input:
     v4:
       - { list: oss-v4 }

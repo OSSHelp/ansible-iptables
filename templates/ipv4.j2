@@ -40,7 +40,11 @@
                 ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
-              }} -j {{ rule.action | default('ACCEPT') }}
+              }}{{
+                ' -m nfacct --nfacct-name ' ~ rule.nfacct if rule.nfacct is defined else ''
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
+              }}
 {% endfor %}{% for iface in ext_ifaces %}
 -A INPUT -i {{ iface }} -j enemy_input
 {% endfor %}{% for rule in forward.v4|default([]) %}
@@ -75,7 +79,9 @@
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
               }}{{
-                ' -j ' ~ rule.action | default('ACCEPT')
+                ' -m nfacct --nfacct-name ' ~ rule.nfacct if rule.nfacct is defined else ''
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
               }}{{
                 ' --set-mss ' ~ rule.setmss if rule.action is defined and rule.action == 'TCPMSS' and rule.setmss is defined else ''
               }}{{
@@ -114,7 +120,11 @@
                 ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
-              }} -j {{ rule.action | default('ACCEPT') }}
+              }}{{
+                ' -m nfacct --nfacct-name ' ~ rule.nfacct if rule.nfacct is defined else ''
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
+              }}
 {% endfor %}{% if docker_forward.v4 is defined %}{% for iface in ext_ifaces %}
 -A DOCKER-USER -i {{ iface }} -j docker_forward
 {% endfor %}{% endif %}{% for rule in docker_forward.v4|default([]) %}
@@ -142,7 +152,9 @@
                 ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
-              }} -j {{ rule.action | default('ACCEPT') }}
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
+              }}
 {% endfor %}{% if accept_icmp.v4 %}
 -A enemy_input -p icmp -m icmp --icmp-type echo-request -j ACCEPT
 -A enemy_input -p icmp -m icmp --icmp-type time-exceeded -j ACCEPT
@@ -177,7 +189,11 @@
                 ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
-              }} -j {{ rule.action | default('ACCEPT') }}
+              }}{{
+                ' -m nfacct --nfacct-name ' ~ rule.nfacct if rule.nfacct is defined else ''
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
+              }}
 {% endfor %}
 -A enemy_input -m state --state RELATED,ESTABLISHED -j ACCEPT
 -A enemy_input -j DROP
@@ -210,7 +226,11 @@
                 ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
-              }} -j {{ rule.action | default('ACCEPT') }}
+              }}{{
+                ' -m nfacct --nfacct-name ' ~ rule.nfacct if rule.nfacct is defined else ''
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
+              }}
 {% endfor %}{% endfor %}{% endif %}
 COMMIT
 *nat
@@ -347,7 +367,9 @@ COMMIT
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
               }}{{
-                ' -j ' ~ rule.action | default('ACCEPT')
+                ' -m nfacct --nfacct-name ' ~ rule.nfacct if rule.nfacct is defined else ''
+              }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
               }}{{
                 ' --set-mss ' ~ rule.setmss if rule.action is defined and rule.action == 'TCPMSS' and rule.setmss is defined else ''
               }}{{

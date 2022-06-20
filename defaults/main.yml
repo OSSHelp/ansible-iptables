@@ -14,3 +14,5 @@ enemy_input:
 
 ipv4_policies: []
 ipv6_policies: []
+
+iptables_test_mode: false
