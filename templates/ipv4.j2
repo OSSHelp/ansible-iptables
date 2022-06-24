@@ -261,7 +261,9 @@ COMMIT
                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
              }}{{
                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
-             }} -j DNAT --to-destination {{ rule.dstaddr }}{{ ':' ~ rule.dstport|replace(':', '-') if rule.dstport is defined else '' }}
+             }}{% if rule.nfacct is defined %} -m nfacct --nfacct-name {{ rule.nfacct }}
+{% else %} -j DNAT --to-destination {{ rule.dstaddr }}{{ ':' ~ rule.dstport|replace(':', '-') if rule.dstport is defined else '' }}
+{% endif %}
 {% endfor %}
 {% for rule in snat.v4|default([]) %}
 -A POSTROUTING{{
@@ -326,7 +328,11 @@ COMMIT
                ' -m set --match-set ' ~ rule.list ~ ' src' if rule.list is defined else ''
              }}{{
                ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
-             }} -j {{ rule.action | default('ACCEPT') }}
+             }}{{
+                ' -m nfacct --nfacct-name ' ~ rule.nfacct if rule.nfacct is defined else ''
+             }}{{
+                ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
+             }}
 {% endfor %}
 COMMIT
 *mangle
