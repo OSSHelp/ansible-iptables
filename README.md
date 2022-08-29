@@ -133,6 +133,7 @@ disable_interface_check: true
 | Setting | Default | iptables | Description |
 | --- | --- | --- | --- |
 | `m: policy` | - | `-m policy --dir in --pol ipsec` | policy module, you can override default `--dir` with `dir:` and `--pol` with `pol:` |
+| `reqid: 1` | - | `--reqid 1` | matches the reqid of the policy rule |
 | `m: ipv6header` | - | `-m ipv6header --header esp` | ipv6header module, you can override `--header` with `header:` |
 | `mss: 123` | - | `-m tcpmss --mss 123` | tcpmss module |
 | `action: TCPMSS` | - | `-j TCPMSS --clamp-mss-to-pmtu` | TCPMSS action, instead `--clamp-mss-to-pmtu` you can set `--set-mss` with `setmss:` |
@@ -159,6 +160,7 @@ disable_interface_check: true
       - { state: 'RELATED,ESTABLISHED' }
       - { dport: 80, comment: "nginx container" }
       - { dport: 443, comment: "nginx container" }
+      - { p: tcp, dport: 5432, m: policy, dir: in, pol: ipsec, reqid: 1 }
       - { action: DROP }
     v6:
       - { state: 'RELATED,ESTABLISHED' }

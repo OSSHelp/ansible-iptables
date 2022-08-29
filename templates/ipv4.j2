@@ -153,6 +153,10 @@
               }}{{
                 ' -m comment --comment "' ~ rule.comment ~ '"' if rule.comment is defined else ''
               }}{{
+                ' -m policy --dir ' ~ rule.dir | default('in') ~ ' --pol ' ~ rule.pol | default('ipsec') ~ ' --proto ' ~ rule.proto | default('esp') if rule.m is defined and rule.m == 'policy' else ''
+              }}{{
+                ' --reqid ' ~ rule.reqid | default('1') if rule.m is defined and rule.reqid is defined and rule.m == 'policy' else ''
+              }}{{
                 ' -j ' ~ rule.action | default('ACCEPT') if rule.nfacct is not defined else ''
               }}
 {% endfor %}{% if accept_icmp.v4 %}
